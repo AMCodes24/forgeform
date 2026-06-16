@@ -133,7 +133,7 @@ function StudioContent() {
         });
 
         const label = data.model.isPlaceholder
-          ? "Placeholder model generated"
+          ? "Fallback model generated — try a category keyword (dragon, cabin, stand)"
           : `${data.model.category.replace(/-/g, " ")} model ready`;
         toast(label, data.model.isPlaceholder ? "info" : "success");
       } catch (err) {
@@ -225,7 +225,7 @@ function StudioContent() {
                 {model.category.replace(/-/g, " ")}
               </Badge>
               {model.isPlaceholder && (
-                <Badge variant="warning">Placeholder</Badge>
+                <Badge variant="warning">Fallback</Badge>
               )}
             </>
           )}

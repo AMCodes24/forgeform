@@ -1,6 +1,7 @@
 /**
- * ForgeForm generation entry point.
- * @see ./INTEGRATIONS.md
+ * Generation pipeline — procedural parametric engine.
+ * External providers: implement GenerationProvider and register in providers map.
+ * @see ../../../docs/ARCHITECTURE.md
  */
 
 import type { GeneratedModelData, GenerationParams, GenerationResult } from "@/types";

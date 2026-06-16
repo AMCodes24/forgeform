@@ -20,8 +20,7 @@ export type GenerationProviderId =
   | "tripo"
   | "rodin"
   | "luma"
-  | "blender"
-  | "openai";
+  | "blender";
 
 export type PipelineStageId =
   | "prompt_submitted"

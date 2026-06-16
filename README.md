@@ -2,54 +2,143 @@
 
 **Turn Ideas Into Printable Reality**
 
-ForgeForm is a full-stack platform for generating 3D-printable models from natural language. Describe an object, customize dimensions and style, preview in an interactive 3D viewer, analyze printability, and export for your 3D printer.
+ForgeForm is a full-stack platform that transforms natural-language descriptions into parametric 3D models, validates them for additive manufacturing, and exports production-ready files.
+
+**Live repository:** [github.com/AMCodes24/forgeform](https://github.com/AMCodes24/forgeform)
+
+---
+
+## Overview
+
+ForgeForm targets makers, engineers, product designers, and educators who need a fast path from concept to printable geometry. Users describe an object, customize dimensions and material settings, preview the model in an interactive 3D viewer, review a printability report, and export STL, OBJ, or GLB files.
+
+The generation engine uses **category-aware parametric modeling** — prompts like *"A dragon keychain with curled tail"* produce recognizable, purpose-built geometry (head, wings, curled tail, keyring loop) rather than generic shapes.
+
+---
 
 ## Features
 
-- **Text-to-3D** — Natural language model generation (placeholder geometry; AI-ready architecture)
-- **Interactive 3D Viewer** — React Three Fiber with orbit controls, lighting, and shadows
-- **Printability Analysis** — Size, material, time, supports, overhangs, thin walls, difficulty score
-- **Export** — STL, OBJ, GLB (placeholder files; integration docs included)
-- **User Accounts** — Supabase authentication
-- **Project Gallery** — Save, reopen, search, and manage projects
-- **Dashboard** — Stats, recent models, generation history
+### 3D Model Generation
+- Natural-language prompt input with example suggestions
+- Keyword-based category detection (keychains, phone stands, cabins, furniture, holders, planters)
+- Parametric CAD builders with dimension-driven output (width, height, depth in mm)
+- Style, material, detail level, and intended-use settings
+
+### Printable Model Workflow
+- Seven-stage generation pipeline with live progress UI
+- Geometry cleanup and automatic mesh repair
+- Printability score (0–100) with pass/warn/fail checks
+- Estimates for print time, filament usage, and material cost
+- STL export gated until printability requirements are met
+
+### Model Customization
+- Adjustable width, height, and depth (5–500 mm)
+- Style presets: modern, minimalist, organic, industrial, playful, and more
+- Material selection: PLA, PETG, ABS, resin, TPU
+- Detail levels: low, medium, high
+
+### Interactive 3D Viewer
+- React Three Fiber + Three.js
+- Orbit, pan, and zoom controls
+- Professional lighting, shadows, and environment maps
+
+### Design Validation
+- Watertight and manifold mesh checks
+- Wall thickness, scale, flat-base, and connectivity analysis
+- Overhang and floating-geometry warnings
+- Automatic repair: thin walls, disconnected fragments, missing base plates
+
+### Export Formats
+- **STL** — slicer-ready (requires passing printability checks)
+- **OBJ** — mesh interchange
+- **GLB** — compact 3D asset
+
+Exports serialize real mesh geometry via Three.js exporters.
+
+### Fabrication & Project Management
+- Supabase authentication (email/password)
+- Save, update, and reopen projects
+- Project gallery with search and delete
+- Dashboard with stats, recent models, export history, and generation chart
+
+---
 
 ## Tech Stack
 
-- Next.js 15 (App Router)
-- TypeScript
-- Tailwind CSS 4
-- Supabase (Auth + PostgreSQL)
-- React Three Fiber + Three.js
-- Framer Motion
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 15 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS 4 |
+| 3D | React Three Fiber, Three.js, three-stdlib |
+| Auth & DB | Supabase (Auth + PostgreSQL) |
+| Validation | Zod |
+| Animation | Framer Motion |
+
+---
+
+## Architecture
+
+```
+src/
+├── app/                  # Pages and API routes
+│   ├── studio/           # Creation workspace
+│   ├── gallery/          # Saved projects
+│   ├── dashboard/        # User overview
+│   └── api/
+│       ├── generate/     # Generation pipeline
+│       ├── projects/     # Project CRUD
+│       ├── exports/      # Export history
+│       └── auth/         # Server-side auth
+├── components/           # UI, viewer, studio panels
+├── lib/
+│   ├── generation/       # Category detection + procedural builders
+│   ├── mesh/             # Analysis and repair
+│   ├── printability/     # Scoring and estimates
+│   └── export/           # Mesh serialization
+└── types/                # Shared TypeScript types
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for pipeline details and extension points.
+
+---
 
 ## Getting Started
 
-### 1. Install dependencies
+### Prerequisites
+- Node.js 18+
+- npm
+- A [Supabase](https://supabase.com) project (free tier works)
+
+### Installation
 
 ```bash
+git clone https://github.com/AMCodes24/forgeform.git
+cd forgeform
 npm install
 ```
 
-### 2. Configure Supabase
+### Environment
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. Copy `.env.example` to `.env.local` and add your keys:
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-3. Run the schema in the Supabase SQL editor:
+### Database
 
-```bash
-# File: supabase/schema.sql
-```
+1. Open Supabase Dashboard → **SQL Editor**
+2. Paste and run the full contents of `supabase/schema.sql`
+3. Enable **Email** auth under Authentication → Providers
+4. Set Site URL to `http://localhost:3000` under Authentication → URL configuration
 
-4. Enable Email auth in Supabase Dashboard → Authentication → Providers
-
-### 3. Run the dev server
+### Run
 
 ```bash
 npm run dev
@@ -57,50 +146,55 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Project Structure
+### Production Build
 
-```
-src/
-├── app/                    # Next.js pages & API routes
-│   ├── api/generate/       # Model generation endpoint
-│   ├── api/projects/       # CRUD for saved projects
-│   ├── api/exports/        # Export history
-│   ├── api/dashboard/      # Dashboard stats
-│   ├── studio/             # Main creation workspace
-│   ├── gallery/            # Saved projects
-│   └── dashboard/          # User overview
-├── components/
-│   ├── viewer/             # React Three Fiber 3D viewer
-│   ├── studio/             # Generation, printability, export UI
-│   ├── gallery/            # Project cards
-│   └── dashboard/          # Stats & charts
-├── lib/
-│   ├── generation/         # Generation pipeline (see INTEGRATIONS.md)
-│   ├── printability/       # Printability analyzer
-│   └── export/             # Export system (see INTEGRATIONS.md)
-└── types/                  # Shared TypeScript types
+```bash
+npm run build
+npm run start
 ```
 
-## Future Integrations
-
-| Feature | Location |
-|---------|----------|
-| Meshy / Tripo / Blender AI | `src/lib/generation/INTEGRATIONS.md` |
-| Real STL/OBJ/GLB export | `src/lib/export/INTEGRATIONS.md` |
-| Image-to-3D | Add provider in `generation/providers/` |
-| Marketplace, teams, printer APIs | Extend `types/` and new `app/` routes |
-
-Set `GENERATION_PROVIDER=meshy` (when implemented) to switch providers.
+---
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server |
+| `npm run dev` | Development server (Turbopack) |
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
+| `npm run lint` | ESLint |
+
+---
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anonymous key |
+| `GENERATION_PROVIDER` | No | Future: external provider id |
+| `MESHY_API_KEY` | No | Future: Meshy integration |
+| `TRIPO_API_KEY` | No | Future: Tripo integration |
+
+Never commit `.env.local` or service role keys.
+
+---
+
+## Security
+
+- `.env.local` and all `*.local` env files are gitignored
+- Only the Supabase **anon** key is exposed to the browser (by design)
+- Row Level Security isolates user data in PostgreSQL
+- Auth requests route through server API handlers
+
+---
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
+
+---
+
+## Author
+
+**AMCodes24** — [GitHub](https://github.com/AMCodes24)

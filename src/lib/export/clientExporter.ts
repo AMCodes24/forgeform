@@ -54,4 +54,4 @@ export async function exportModelMesh(
   }
 }
 
-export { downloadBlob } from "./exporter";
+export { downloadBlob } from "./download";

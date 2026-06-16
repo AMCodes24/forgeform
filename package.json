@@ -1,7 +1,14 @@
 {
   "name": "forgeform",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Prompt-driven 3D model generation platform with print-readiness validation and export",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AMCodes24/forgeform.git"
+  },
+  "author": "AMCodes24 (https://github.com/AMCodes24)",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

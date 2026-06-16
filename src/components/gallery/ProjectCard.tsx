@@ -59,7 +59,7 @@ export function ProjectCard({
         </Badge>
         {project.model_data?.isPlaceholder && (
           <Badge variant="warning" className="absolute top-3 left-3 text-[10px]">
-            Placeholder
+            Fallback
           </Badge>
         )}
       </div>

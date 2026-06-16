@@ -121,7 +121,7 @@ export function buildPrintabilityReport(
     overhangWarnings.push("Multiple disconnected bodies — verify slicer union");
   }
   if (model.isPlaceholder) {
-    notes.push("Placeholder model — connect Meshy/Tripo for photorealistic geometry");
+    notes.push("Unclassified prompt — assign a category keyword for parametric output");
   }
 
   notes.push(`Category: ${model.category.replace(/-/g, " ")}`);

@@ -61,7 +61,7 @@ export function LandingPage({ user }: { user: User | null }) {
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-forge-500/30 bg-forge-500/10 px-4 py-1.5 text-sm text-forge-400 mb-6">
             <Sparkles className="h-4 w-4" />
-            AI-Powered 3D Creation
+            Prompt-Driven 3D Fabrication
           </span>
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
             <span className="text-gradient-forge">{APP_NAME}</span>
