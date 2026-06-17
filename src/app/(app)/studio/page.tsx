@@ -8,10 +8,19 @@ import { GenerationForm } from "@/components/studio/GenerationForm";
 import { PrintabilityPanel } from "@/components/studio/PrintabilityPanel";
 import { ExportPanel } from "@/components/studio/ExportPanel";
 import { GenerationPipeline } from "@/components/studio/GenerationPipeline";
+import { SaveAuthModal } from "@/components/studio/SaveAuthModal";
+import { GuestSessionNotice } from "@/components/studio/GuestSessionNotice";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useToast } from "@/components/ui/Toast";
 import { DatabaseSetupBanner } from "@/components/auth/DatabaseSetupBanner";
+import { createClient } from "@/lib/supabase/client";
+import {
+  clearGuestSession,
+  loadGuestSession,
+  saveGuestSession,
+} from "@/lib/guest/session";
+import type { User } from "@supabase/supabase-js";
 import type {
   GeneratedModelData,
   GenerationParams,
@@ -49,6 +58,8 @@ function StudioContent() {
   const projectIdParam = searchParams.get("project");
   const { toast } = useToast();
 
+  const [user, setUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [model, setModel] = useState<GeneratedModelData | null>(null);
   const [printability, setPrintability] = useState<PrintabilityReport | null>(
     null
@@ -60,10 +71,40 @@ function StudioContent() {
   const [projectId, setProjectId] = useState<string | undefined>();
   const [formValues, setFormValues] = useState<GenerationParams | null>(null);
   const [loadingProject, setLoadingProject] = useState(!!projectIdParam);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [guestRestored, setGuestRestored] = useState(false);
 
   useEffect(() => {
-    if (!projectIdParam) {
+    createClient()
+      .auth.getUser()
+      .then(({ data }) => {
+        setUser(data.user);
+        setAuthChecked(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!authChecked || projectIdParam) return;
+
+    const session = loadGuestSession();
+    if (!session) return;
+
+    setModel(session.model);
+    setPrintability(session.printability);
+    setPipeline(session.pipeline);
+    setFormValues(session.formValues);
+    setGuestRestored(true);
+  }, [authChecked, projectIdParam]);
+
+  useEffect(() => {
+    if (!authChecked || !projectIdParam) {
+      if (!projectIdParam) setLoadingProject(false);
+      return;
+    }
+
+    if (!user) {
       setLoadingProject(false);
+      toast("Sign in to load saved projects", "info");
       return;
     }
 
@@ -97,16 +138,44 @@ function StudioContent() {
           detailLevel: p.detail_level as GenerationParams["detailLevel"],
           intendedUse: p.intended_use,
         });
+        clearGuestSession();
       })
       .catch(() => toast("Failed to load project", "error"))
       .finally(() => setLoadingProject(false));
-  }, [projectIdParam, toast]);
+  }, [projectIdParam, user, authChecked, toast]);
 
-  const applyResult = (result: GenerationResult) => {
-    setModel(result.model);
-    setPrintability(result.printability);
-    setPipeline(result.pipeline);
-  };
+  const persistGuestSession = useCallback(
+    (
+      nextModel: GeneratedModelData,
+      nextPrintability: PrintabilityReport,
+      nextPipeline: PipelineStep[],
+      nextFormValues: GenerationParams
+    ) => {
+      if (user) return;
+      saveGuestSession({
+        model: nextModel,
+        printability: nextPrintability,
+        pipeline: nextPipeline,
+        formValues: nextFormValues,
+      });
+    },
+    [user]
+  );
+
+  const applyResult = useCallback(
+    (result: GenerationResult, params: GenerationParams) => {
+      setModel(result.model);
+      setPrintability(result.printability);
+      setPipeline(result.pipeline);
+      persistGuestSession(
+        result.model,
+        result.printability,
+        result.pipeline,
+        params
+      );
+    },
+    [persistGuestSession]
+  );
 
   const handleGenerate = useCallback(
     async (params: GenerationParams) => {
@@ -124,13 +193,16 @@ function StudioContent() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Generation failed");
 
-        applyResult({
-          model: data.model,
-          printability: data.printability,
-          meshAnalysis: data.meshAnalysis,
-          repairs: data.repairs,
-          pipeline: data.pipeline,
-        });
+        applyResult(
+          {
+            model: data.model,
+            printability: data.printability,
+            meshAnalysis: data.meshAnalysis,
+            repairs: data.repairs,
+            pipeline: data.pipeline,
+          },
+          params
+        );
 
         const label = data.model.isPlaceholder
           ? "Fallback model generated — try a category keyword (dragon, cabin, stand)"
@@ -144,10 +216,10 @@ function StudioContent() {
         setGenerating(false);
       }
     },
-    [toast]
+    [applyResult, toast]
   );
 
-  const handleSave = async () => {
+  const saveToCloud = async () => {
     if (!model || !formValues || !printability) return;
     setSaving(true);
 
@@ -188,6 +260,7 @@ function StudioContent() {
 
       setProjectId(data.project.id);
       setSaved(true);
+      clearGuestSession();
       toast(isUpdate ? "Project updated" : "Project saved", "success");
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -201,7 +274,16 @@ function StudioContent() {
     }
   };
 
-  if (loadingProject) {
+  const handleSave = () => {
+    if (!model || !formValues || !printability) return;
+    if (!user) {
+      setSaveModalOpen(true);
+      return;
+    }
+    void saveToCloud();
+  };
+
+  if (!authChecked || loadingProject) {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-forge-500/30 border-t-forge-500" />
@@ -209,8 +291,15 @@ function StudioContent() {
     );
   }
 
+  const isGuest = !user;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <SaveAuthModal
+        open={saveModalOpen}
+        onClose={() => setSaveModalOpen(false)}
+      />
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-zinc-100">Studio</h1>
@@ -251,7 +340,8 @@ function StudioContent() {
         </div>
       </div>
 
-      <DatabaseSetupBanner />
+      {isGuest && (model || guestRestored) && <GuestSessionNotice />}
+      {user && <DatabaseSetupBanner />}
 
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="lg:col-span-4 space-y-6">

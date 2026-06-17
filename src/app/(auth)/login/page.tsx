@@ -14,7 +14,7 @@ import { SupabaseSetupNotice } from "@/components/auth/SupabaseSetupNotice";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/dashboard";
+  const redirect = searchParams.get("redirect") ?? "/studio";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -99,8 +99,16 @@ function LoginForm() {
 
       <p className="mt-6 text-center text-sm text-zinc-500">
         Don&apos;t have an account?{" "}
-        <Link href="/signup" className="text-forge-400 hover:text-forge-300">
+        <Link
+          href={`/signup?redirect=${encodeURIComponent(redirect)}`}
+          className="text-forge-400 hover:text-forge-300"
+        >
           Sign up
+        </Link>
+      </p>
+      <p className="mt-4 text-center text-sm text-zinc-500">
+        <Link href="/studio" className="text-zinc-400 hover:text-zinc-300">
+          Continue without an account
         </Link>
       </p>
     </Card>

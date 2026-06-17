@@ -74,17 +74,29 @@ export function LandingPage({ user }: { user: User | null }) {
             Preview in 3D, check printability, and export for your printer.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href={user ? "/studio" : "/signup"}>
+            <Link href="/studio">
               <Button size="lg" className="glow-forge min-w-[200px]">
-                Start Creating
+                Start Designing
               </Button>
             </Link>
-            <Link href={user ? "/dashboard" : "/login"}>
-              <Button variant="secondary" size="lg" className="min-w-[200px]">
-                {user ? "Go to Dashboard" : "Sign In"}
-              </Button>
-            </Link>
+            {!user && (
+              <Link href="/login">
+                <Button variant="secondary" size="lg" className="min-w-[200px]">
+                  Sign In
+                </Button>
+              </Link>
+            )}
+            {user && (
+              <Link href="/dashboard">
+                <Button variant="secondary" size="lg" className="min-w-[200px]">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            )}
           </div>
+          <p className="mt-4 text-sm text-zinc-500">
+            Create an account to save and manage your designs.
+          </p>
         </motion.div>
 
         <motion.div
@@ -135,11 +147,19 @@ export function LandingPage({ user }: { user: User | null }) {
       <section className="relative mx-auto max-w-3xl px-4 py-20 text-center sm:px-6">
         <h2 className="text-3xl font-bold mb-4">Ready to forge something new?</h2>
         <p className="text-zinc-500 mb-8">
-          Join makers, engineers, and creators turning ideas into printable reality.
+          Jump into the studio and start designing — no account required.
+          Create one when you&apos;re ready to save your work.
         </p>
-        <Link href="/signup">
-          <Button size="lg">Create Free Account</Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link href="/studio">
+            <Button size="lg">Start Designing</Button>
+          </Link>
+          <Link href="/signup">
+            <Button variant="secondary" size="lg">
+              Create Account
+            </Button>
+          </Link>
+        </div>
       </section>
     </div>
   );
